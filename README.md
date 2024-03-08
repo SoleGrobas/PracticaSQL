@@ -17,6 +17,6 @@ El modelado de la base de datos se realizó utilizando Draw.io.
 
 ## Vista del modelado
 
-![App Screenshot]
+![App Screenshot](https://github.com/SoleGrobas/PracticaSQL/blob/main/modelado_practica_videoclub.png)
 
 
