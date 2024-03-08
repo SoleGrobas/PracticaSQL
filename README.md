@@ -15,4 +15,8 @@ El modelado de la base de datos se realizó utilizando Draw.io.
 
 1. **Crear la Base de Datos:** Ejecuta el script.sql en tu servidor de PostgreSQL para crear la base de datos y las tablas necesarias. En el script están incluidos datos de prueba y algunas consultas básicas.
 
+## Vista del modelado
+
+![App Screenshot]
+
 
