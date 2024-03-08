@@ -1,6 +1,6 @@
-create schema practicaprueba;
+create schema practica_videoclub;
 
-set schema 'practicaprueba';
+set schema 'practica_videoclub';
 
 create table socio(
 	id smallserial primary key,
@@ -50,7 +50,6 @@ create table telefono(
 
 create table prestamo(
 	id smallserial primary key,
-	id_pelicula smallint not null,
 	id_socio smallint not null,
 	id_copia smallint not null,
 	fecha_retiro date not null,
@@ -204,16 +203,18 @@ add constraint fk_pelicula_copia
 foreign key (id_pelicula) references pelicula(id);
 
 alter table prestamo 
-add constraint fk_pelicula_prestamo 
-foreign key (id_pelicula) references pelicula(id);
-
-alter table prestamo 
 add constraint fk_socio_prestamo 
 foreign key (id_socio) references socio(id);
 
 alter table prestamo 
 add constraint fk_copia_prestamo 
 foreign key (id_copia) references copia(id);
+
+-- Creación de chequeos para asegurar que no tengo valores duplicados
+alter table pelicula add constraint unique_pelicula_genero_director unique (titulo, id_director, id_genero);
+alter table socio  add constraint unique_identificacion unique (identificacion);
+alter table director add constraint unique_nombre_director unique (nombre);
+alter table genero add constraint unique_valor_genero unique (valor);
 
 insert into genero(valor)
 select distinct genero from tmp_videoclub tv;
@@ -237,17 +238,20 @@ insert into copia (valor, id_pelicula)
 select distinct tv.id_copia, p.id from tmp_videoclub tv
 inner join pelicula p on p.titulo = tv.titulo;
 
-insert into prestamo (id_pelicula, id_socio, id_copia, fecha_retiro, fecha_devolucion)
-select p.id, s.id, c.id, tv.fecha_alquiler , tv.fecha_devolucion from tmp_videoclub tv
-inner join pelicula p on p.titulo = tv.titulo 
+insert into prestamo (id_socio, id_copia, fecha_retiro, fecha_devolucion)
+select s.id, c.id, tv.fecha_alquiler , tv.fecha_devolucion from tmp_videoclub tv
 inner join socio s on s.identificacion = tv.dni
 inner join copia c on c.valor = tv.id_copia ;
 
+-- Eliminación de tabla temporal
+drop table tmp_videoclub;
+
+
 --Qué socio alquiló qué copia?
-select c.valor as copia, p2.titulo, p.id_socio, s.nombre , s.apellido , p.fecha_retiro  from prestamo p
-inner join copia c on c.id = p.id_copia 
-inner join socio s on s.id  = p.id_socio 
-inner join pelicula p2 on p2.id = p.id_pelicula ;
+select p2.id_socio, p2.id_copia, p.titulo from pelicula p
+inner join copia c on p.id = c.id_pelicula 
+inner join prestamo p2 on c.id = p2.id_copia 
+group by p2.id_socio, p2.id_copia, p.titulo;
 
 insert into pelicula (titulo, id_genero, id_director, sinopsis) values
 	('El secreto de sus ojos', '1', '1', 'Peli prueba');
@@ -256,7 +260,8 @@ insert into copia (valor, id_pelicula) values
 	('100', '24');
 
 --Qué peliculas hay disponibles y cuántas copias de cada una?
-select p.titulo as titulos_disponibles, count(c.valor) as cantidad_copias from copia c
-left join prestamo p2 on c.id = p2.id_copia AND p2.fecha_devolucion is not null
-inner join pelicula p on p.id = c.id_pelicula
+select p.titulo as titulos_disponibles, count(c.valor) as cantidad_copias from pelicula p 
+inner join copia c  on p.id = c.id_pelicula
+left join prestamo p2 on c.id = p2.id_copia and p2.fecha_retiro is not null and p2.fecha_devolucion is null
+where p2.id is null
 group by p.titulo;
